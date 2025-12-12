@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-gradient-1: #667eea;
+            --bg-gradient-2: #764ba2;
+            --card-bg: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-light: #999;
+            --border-color: #e0e0e0;
+            --input-bg: white;
+            --input-border: #e0e0e0;
+            --input-focus: #667eea;
+            --history-bg: #f8f9fa;
+            --history-hover: #e9ecef;
+        }
+        
+        body.dark-mode {
+            --bg-gradient-1: #1a1a2e;
+            --bg-gradient-2: #16213e;
+            --card-bg: #0f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #b8b8b8;
+            --text-light: #888;
+            --border-color: #1e3a5f;
+            --input-bg: #1a2942;
+            --input-border: #1e3a5f;
+            --input-focus: #667eea;
+            --history-bg: #1a2942;
+            --history-hover: #243447;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        
+        .header-buttons {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+        
+        .back-btn.visible {
+            display: block;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        h2, h3 {
+            color: var(--text-primary);
+        }
+        
+        p {
+            color: var(--text-primary);
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        .btn:hover { background: #5568d3; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .status-card { display: none; }
+        .status-card.active { display: block; }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .status-processing { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
+        }
+        
+        .article-card {
+            border: 1px solid var(--border-color);
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: var(--card-bg);
+        }
+        
+        .article-card.very-relevant {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        body.dark-mode .article-card.very-relevant {
+            background: #1a3a2a;
+        }
+        
+        .article-card.relevant {
+            border-left-color: #ffc107;
+            background: #fffdf0;
+        }
+        
+        body.dark-mode .article-card.relevant {
+            background: #3a3520;
+        }
+        
+        .article-card.not-relevant {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        body.dark-mode .article-card.not-relevant {
+            background: #3a1a1f;
+        }
+        
+        .article-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .article-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+        
+        .article-description {
+            margin-top: 10px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .article-reasoning {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: var(--text-primary);
+        }
+        
+        body.dark-mode .article-reasoning {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number { font-size: 2em; font-weight: 700; }
+        .stat-label { font-size: 0.9em; opacity: 0.9; }
+        
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .history-item {
+            background: var(--history-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .history-item:hover {
+            background: var(--history-hover);
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .history-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .history-meta {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="icon-btn back-btn" id="backBtn" onclick="goBack()">← Back</button>
+            <div class="header-buttons">
+                <button class="icon-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+            </div>
+            <h1>🤖 AI News Agent</h1>
+            <p>Search and analyze news articles with AI</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="card" id="searchForm">
+            <h2 style="margin-bottom: 20px;">Search Configuration</h2>
+            
+            <div class="form-group">
+                <label for="query">Search Query *</label>
+                <input type="text" id="query" placeholder="e.g., Quantum Computing, Climate Change, AI" required>
+            </div>
+
+            <div class="form-group">
+                <label for="extraTopics">Additional Topics (Optional)</label>
+                <input type="text" id="extraTopics" placeholder="Additional context for analysis">
+            </div>
+
+            <div class="form-group">
+                <label>Languages *</label>
+                <div class="checkbox-group" id="languages">
+                    <div class="checkbox-item"><input type="checkbox" value="en" checked> <label>English</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="de"> <label>German</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="es"> <label>Spanish</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="fr"> <label>French</label></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Categories *</label>
+                <div class="checkbox-group" id="categories">
+                    <div class="checkbox-item"><input type="checkbox" value="business"> <label>Business</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="crime"> <label>Crime</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="domestic"> <label>Domestic</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="education"> <label>Education</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="entertainment"> <label>Entertainment</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="environment"> <label>Environment</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="food"> <label>Food</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="health"> <label>Health</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="lifestyle"> <label>Lifestyle</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="other"> <label>Other</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="politics"> <label>Politics</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="science" checked> <label>Science</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="sports"> <label>Sports</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="technology" checked> <label>Technology</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="top"> <label>Top</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="tourism"> <label>Tourism</label></div>
+                    <div class="checkbox-item"><input type="checkbox" value="world"> <label>World</label></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="newsApiKey">NewsData.io API Key * <a href="https://newsdata.io/register" target="_blank" style="font-size: 0.85em; color: #667eea; text-decoration: none;">(Get free key)</a></label>
+                <input type="password" id="newsApiKey" required>
+            </div>
+
+            <div class="form-group">
+                <label for="openaiApiKey">OpenAI API Key * <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size: 0.85em; color: #667eea; text-decoration: none;">(Get API key)</a></label>
+                <input type="password" id="openaiApiKey" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="apiBaseUrl">API Base URL (Optional)</label>
+                <input type="text" id="apiBaseUrl" placeholder="https://api.openai.com/v1 (default) or Azure endpoint">
+                <small style="color: var(--text-light); font-size: 0.85em;">Leave empty for standard OpenAI. For Azure: https://your-resource.openai.azure.com/</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="modelSelect">Model * (More coming soon!)</label>
+                <select id="modelSelect" style="width: 100%; padding: 12px; border: 2px solid var(--input-border); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-primary);">
+                    <option value="gpt-4o-mini">gpt-4o-mini</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="startSearch()">🚀 Start Analysis</button>
+            
+            <div style="margin-top: 30px;">
+                <h3 style="margin-bottom: 15px;">📜 Search History</h3>
+                <div id="historyContainer" style="max-height: 300px; overflow-y: auto;">
+                    <p style="color: var(--text-light); text-align: center;">Loading history...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card status-card" id="statusCard">
+            <div class="status-header">
+                <h2>Job Status</h2>
+                <span class="status-badge" id="statusBadge">Processing</span>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <p id="statusMessage">Initializing... <span class="spinner"></span></p>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalArticles">0</div>
+                    <div class="stat-label">Total Articles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="veryRelevant">0</div>
+                    <div class="stat-label">Very Relevant</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="relevant">0</div>
+                    <div class="stat-label">Relevant</div>
+                </div>
+            </div>
+
+            <div class="download-buttons" id="downloadButtons" style="display: none;">
+                <button class="btn btn-small" onclick="downloadResults('json')">📥 JSON</button>
+                <button class="btn btn-small" onclick="downloadResults('csv')">📥 CSV</button>
+                <button class="btn btn-small" onclick="downloadResults('xlsx')">📥 Excel</button>
+            </div>
+
+            <div id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentJobId = null;
+        let pollInterval = null;
+
+        function getSelectedValues(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        async function startSearch() {
+            const query = document.getElementById('query').value.trim();
+            const extraTopics = document.getElementById('extraTopics').value.trim();
+            const newsApiKey = document.getElementById('newsApiKey').value.trim();
+            const openaiApiKey = document.getElementById('openaiApiKey').value.trim();
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value.trim();
+            const model = document.getElementById('modelSelect').value;
+            const languages = getSelectedValues('languages');
+            const categories = getSelectedValues('categories');
+
+            if (!query || !newsApiKey || !openaiApiKey) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (languages.length === 0 || categories.length === 0) {
+                alert('Please select at least one language and category');
+                return;
+            }
+
+            const requestData = {
+                query,
+                languages,
+                categories,
+                extra_topics: extraTopics || null,
+                news_api_key: newsApiKey,
+                openai_api_key: openaiApiKey,
+                api_base_url: apiBaseUrl || null,
+                model: model || 'gpt-4o-mini',
+                size: 10,
+                max_pages: 10
+            };
+
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentJobId = data.job_id;
+                    document.getElementById('searchForm').style.display = 'none';
+                    document.getElementById('statusCard').classList.add('active');
+                    document.getElementById('backBtn').classList.add('visible');
+                    startPolling();
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+
+        function startPolling() {
+            pollInterval = setInterval(checkJobStatus, 2000);
+            checkJobStatus();
+        }
+
+        async function checkJobStatus() {
+            try {
+                const response = await fetch(`/api/jobs/${currentJobId}`);
+                const job = await response.json();
+
+                updateUI(job);
+
+                if (job.status === 'completed' || job.status === 'failed') {
+                    clearInterval(pollInterval);
+                    if (job.status === 'completed') {
+                        loadResults();
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updateUI(job) {
+            document.getElementById('statusBadge').textContent = job.status.toUpperCase();
+            document.getElementById('statusBadge').className = `status-badge status-${job.status}`;
+            document.getElementById('progressFill').style.width = job.progress + '%';
+
+            const messages = {
+                'created': '🔄 Initializing...',
+                'processing': '⚙️ Processing your request...',
+                'fetching': '📡 Fetching articles from NewsData.io...',
+                'analyzing': '🤖 AI is analyzing articles with GPT-4o-mini...',
+                'completed': `✅ Analysis complete! ${job.total_articles || 0} articles classified`,
+                'failed': '❌ Job failed'
+            };
+
+            const statusMsg = messages[job.status] || job.status;
+            const spinner = (job.status === 'fetching' || job.status === 'analyzing' || job.status === 'processing') 
+                ? '<span class="spinner"></span>' 
+                : '';
+            
+            document.getElementById('statusMessage').innerHTML = statusMsg + ' ' + spinner;
+
+            if (job.error) {
+                document.getElementById('errorMessage').textContent = 'Error: ' + job.error;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+
+            if (job.status === 'completed' && job.total_articles) {
+                document.getElementById('stats').style.display = 'grid';
+                document.getElementById('downloadButtons').style.display = 'flex';
+            }
+        }
+
+        async function loadResults() {
+            try {
+                const response = await fetch(`/api/jobs/${currentJobId}/results`);
+                const data = await response.json();
+
+                displayResults(data.articles);
+                updateStats(data.articles);
+            } catch (error) {
+                console.error('Error loading results:', error);
+            }
+        }
+
+        function displayResults(articles) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '<h3 style="margin: 30px 0 20px 0;">📰 Classified Articles</h3>';
+
+            articles.forEach(article => {
+                const relevanceClass = article.relevance === 'Very Relevant' ? 'very-relevant' :
+                                      article.relevance === 'Relevant' ? 'relevant' : 'not-relevant';
+
+                container.innerHTML += `
+                    <div class="article-card ${relevanceClass}">
+                        <div class="article-title">${article.title}</div>
+                        <a href="${article.link}" target="_blank" class="article-link">${article.link}</a>
+                        ${article.description ? `<div class="article-description">${article.description}</div>` : ''}
+                        <div class="article-reasoning"><strong>📊 ${article.relevance}:</strong> ${article.reasoning}</div>
+                    </div>
+                `;
+            });
+            
+            // Load search history after displaying results
+            loadSearchHistory();
+        }
+        
+        async function loadSearchHistory() {
+            try {
+                const response = await fetch('/api/jobs?limit=50');
+                const data = await response.json();
+                
+                const container = document.getElementById('historyContainer');
+                
+                if (data.jobs.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-light); text-align: center;">No past searches yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                data.jobs.forEach(job => {
+                    const date = new Date(job.updated_at).toLocaleString();
+                    const statusIcon = job.status === 'completed' ? '✅' : 
+                                      job.status === 'failed' ? '❌' : '⏳';
+                    
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.onclick = () => viewPastSearch(job.job_id);
+                    
+                    historyItem.innerHTML = `
+                        <div class="history-title">${statusIcon} ${job.query}</div>
+                        <div class="history-meta">
+                            ${job.total_articles || 0} articles • ${date}
+                        </div>
+                    `;
+                    
+                    container.appendChild(historyItem);
+                });
+            } catch (error) {
+                console.error('Error loading history:', error);
+                document.getElementById('historyContainer').innerHTML = 
+                    '<p style="color: var(--text-light); text-align: center;">Failed to load history</p>';
+            }
+        }
+        
+        async function viewPastSearch(jobId) {
+            currentJobId = jobId;
+            
+            try {
+                const response = await fetch(`/api/jobs/${jobId}`);
+                const job = await response.json();
+                
+                document.getElementById('searchForm').style.display = 'none';
+                document.getElementById('statusCard').classList.add('active');
+                document.getElementById('backBtn').classList.add('visible');
+                
+                updateUI(job);
+                
+                if (job.status === 'completed') {
+                    loadResults();
+                }
+            } catch (error) {
+                alert('Error loading past search: ' + error.message);
+            }
+        }
+
+        function updateStats(articles) {
+            document.getElementById('totalArticles').textContent = articles.length;
+            document.getElementById('veryRelevant').textContent = articles.filter(a => a.relevance === 'Very Relevant').length;
+            document.getElementById('relevant').textContent = articles.filter(a => a.relevance === 'Relevant').length;
+        }
+
+        function downloadResults(format) {
+            window.location.href = `/api/jobs/${currentJobId}/download?format=${format}`;
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            document.getElementById('darkModeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        
+        function goBack() {
+            document.getElementById('statusCard').classList.remove('active');
+            document.getElementById('searchForm').style.display = 'block';
+            document.getElementById('backBtn').classList.remove('visible');
+            currentJobId = null;
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+        }
+        
+        async function fetchModels() {
+            const openaiApiKey = document.getElementById('openaiApiKey').value.trim();
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value.trim() || 'https://api.openai.com/v1';
+            
+            if (!openaiApiKey) {
+                alert('Please enter your OpenAI API key first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${apiBaseUrl}/models`, {
+                    headers: {
+                        'Authorization': `Bearer ${openaiApiKey}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch models');
+                }
+                
+                const data = await response.json();
+                const select = document.getElementById('modelSelect');
+                const currentValue = select.value;
+                
+                // Clear and repopulate
+                select.innerHTML = '';
+                
+                // Filter for chat/text models only (exclude embeddings, audio, image models)
+                const textModels = data.data
+                    .filter(m => {
+                        const id = m.id.toLowerCase();
+                        // Include GPT chat models
+                        if (id.includes('gpt')) {
+                            // Exclude embedding, vision-only, and other non-chat variants
+                            return !id.includes('embedding') && 
+                                   !id.includes('realtime') &&
+                                   !id.includes('audio');
+                        }
+                        // Include other chat models like Claude, etc. if available
+                        return id.includes('claude') || id.includes('chat') || id.includes('text-') && !id.includes('embedding');
+                    })
+                    .sort((a, b) => {
+                        // Sort by priority: gpt-4o, gpt-4, gpt-3.5
+                        if (a.id.includes('gpt-4o')) return -1;
+                        if (b.id.includes('gpt-4o')) return 1;
+                        if (a.id.includes('gpt-4')) return -1;
+                        if (b.id.includes('gpt-4')) return 1;
+                        return a.id.localeCompare(b.id);
+                    });
+                
+                if (textModels.length === 0) {
+                    alert('No compatible text models found. Using default models.');
+                    // Restore defaults
+                    select.innerHTML = `
+                        <option value="gpt-4o-mini">gpt-4o-mini (default)</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4-turbo">gpt-4-turbo</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    `;
+                    return;
+                }
+                
+                textModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.id;
+                    select.appendChild(option);
+                });
+                
+                // Try to restore previous selection
+                if (textModels.find(m => m.id === currentValue)) {
+                    select.value = currentValue;
+                }
+                
+                alert(`Loaded ${textModels.length} compatible text models`);
+            } catch (error) {
+                console.error('Error fetching models:', error);
+                alert('Failed to fetch models. Check your API key and base URL.');
+            }
+        }
+
+        // Save/load API keys
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedNewsKey = localStorage.getItem('newsApiKey');
+            const savedOpenaiKey = localStorage.getItem('openaiApiKey');
+            const savedApiBaseUrl = localStorage.getItem('apiBaseUrl');
+            const savedModel = localStorage.getItem('model');
+            
+            if (savedNewsKey) document.getElementById('newsApiKey').value = savedNewsKey;
+            if (savedOpenaiKey) document.getElementById('openaiApiKey').value = savedOpenaiKey;
+            if (savedApiBaseUrl) document.getElementById('apiBaseUrl').value = savedApiBaseUrl;
+            if (savedModel) document.getElementById('modelSelect').value = savedModel;
+
+            document.getElementById('newsApiKey').addEventListener('change', (e) => {
+                localStorage.setItem('newsApiKey', e.target.value);
+            });
+            document.getElementById('openaiApiKey').addEventListener('change', (e) => {
+                localStorage.setItem('openaiApiKey', e.target.value);
+            });
+            document.getElementById('apiBaseUrl').addEventListener('change', (e) => {
+                localStorage.setItem('apiBaseUrl', e.target.value);
+            });
+            document.getElementById('modelSelect').addEventListener('change', (e) => {
+                localStorage.setItem('model', e.target.value);
+            });
+            
+            // Load dark mode preference
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').textContent = '☀️';
+            }
+            
+            // Load search history on page load
+            loadSearchHistory();
+        });
+    </script>
+</body>
+</html>

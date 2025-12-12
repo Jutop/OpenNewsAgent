@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.env
+.venv
+venv/
+env/
+
+# Data
+data/
+results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# API Keys
+.apikey
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
