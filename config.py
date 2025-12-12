@@ -3,6 +3,7 @@ Configuration settings
 """
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 class Settings(BaseSettings):
     """Application settings"""
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     VERSION: str = "2.0.0"
     DEBUG: bool = True
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = int(os.environ.get("PORT", 8000))
     
     # OpenAI
     OPENAI_MODEL: str = "gpt-4o-mini"
