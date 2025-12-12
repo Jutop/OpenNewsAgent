@@ -4,7 +4,7 @@
 
 Modern web application for searching and analyzing news articles with AI-powered classification.
 
-> **🚀 Live Demo:** [Coming Soon - Deploy Your Own in 2 Minutes!](#-deployment)
+> **🚀 Live Demo:** [https://opennewsagent-production.up.railway.app](https://opennewsagent-production.up.railway.app)
 
 ## ✨ Features
 
