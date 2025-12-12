@@ -1,64 +1,139 @@
-# AI News Agent - Web Application
+# 🤖 AI News Agent
 
-Modern web app for searching and analyzing news with AI.
+Modern web application for searching and analyzing news articles with AI-powered classification.
+
+## ✨ Features
+
+- 🔍 **Search Any Topic** - Search for any news topic across 17+ categories
+- 🤖 **AI Classification** - Automatic analysis with OpenAI (gpt-4o-mini)
+- 🌍 **17 News Categories** - Business, Technology, Sports, Health, and more
+- 📊 **Export Options** - Download results as JSON, CSV, or Excel
+- 🌙 **Dark Mode** - Toggle between light and dark themes
+- 📜 **Search History** - View the 50 most recent searches (shared across users)
+- ⚡ **Real-Time Updates** - Live progress tracking with status updates
+- 🔧 **Custom API Settings** - Support for Azure OpenAI and custom base URLs
+- 🚀 **Multi-User Ready** - Each user provides their own API keys
 
 ## 🚀 Quick Start
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+### 1. Install Dependencies
 
-# Run the app
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run the Application
+
+```bash
 python main.py
 ```
 
-Then open: http://localhost:8000
+Then open: **http://localhost:8000**
 
-## 📖 Features
+### 3. Enter Your API Keys
 
-- **Any Topic**: Search for any news topic
-- **Multi-Language**: English, German, Spanish, French
-- **AI Analysis**: Azure OpenAI classification
-- **Real-Time Updates**: Live job status
-- **Export**: JSON, CSV, Excel
+You'll need two free API keys (entered in the browser UI):
 
-## 🔑 API Keys Needed
+1. **NewsData.io** - [Get free key](https://newsdata.io/) (200 requests/day)
+2. **OpenAI** - [Get API key](https://platform.openai.com/api-keys)
 
-1. **NewsData.io** - Get free key at: https://newsdata.io/
-2. **OpenAI** - Get your API key at: https://platform.openai.com/api-keys
+*Your keys are stored only in your browser's localStorage and never on the server.*
 
-## 📝 API Documentation
+## 📖 How to Use
 
-Interactive docs at: http://localhost:8000/api/docs
+1. **Enter API Keys** - Add your NewsData.io and OpenAI keys
+2. **Search Query** - Enter any topic (e.g., "Quantum Computing", "Climate Change")
+3. **Configure Filters** - Select language, country, and category (optional)
+4. **Analyze** - Click "Search & Analyze" and watch real-time progress
+5. **View Results** - Browse classified articles with AI insights
+6. **Export** - Download results in your preferred format
 
 ## 🏗️ Architecture
 
 ```
 OpenNewsAgent/
-├── main.py              # FastAPI app
-├── config.py            # Settings
-├── models.py            # Data models
+├── main.py                 # FastAPI application entry point
+├── config.py               # Application configuration
+├── models.py               # Pydantic data models
 ├── services/
-│   ├── news_fetcher.py  # NewsData.io
-│   ├── ai_analyzer.py   # Azure OpenAI
-│   └── job_manager.py   # Job handling
+│   ├── news_fetcher.py     # NewsData.io API integration
+│   ├── ai_analyzer.py      # OpenAI classification service
+│   └── job_manager.py      # Job state management
 ├── static/
-│   └── index.html       # Web UI
-└── requirements.txt
+│   └── index.html          # Single-page web UI
+├── results/                # Job results storage (JSON files)
+└── requirements.txt        # Python dependencies
 ```
 
-## 📊 Limitations (Free Tier)
+## 🔑 API Keys & Privacy
 
-- **NewsData.io**: 10 articles per page, limited requests
-- Premium support coming soon
+- ✅ **No Server Storage** - API keys are only stored in your browser
+- ✅ **Per-Request** - Keys are sent with each request, never persisted
+- ✅ **Multi-User** - Each user provides their own keys
+- ✅ **Your Cost** - You pay for your own OpenAI/NewsData.io usage
 
-## 🔒 Security
+## 📊 Categories Available
 
-- API keys never stored on server
-- Passed in requests only
-- Browser localStorage for convenience
+**17 News Categories:**
+- Top Stories
+- Business
+- Entertainment
+- Environment
+- Food
+- Health
+- Politics
+- Science
+- Sports
+- Technology
+- Tourism
+- World
+- Crime
+- Domestic
+- Education
+- Lifestyle
+- Other
 
-## 📄 Old Version
+## 🌐 Supported Languages & Countries
 
-Your previous desktop app is backed up in the `backup/` folder.
+- **Languages**: English, German, Spanish, French, Italian, and more
+- **Countries**: US, UK, Germany, France, and 50+ others
+
+## 🔧 Advanced Configuration
+
+### Custom OpenAI Endpoint
+
+Support for Azure OpenAI or custom endpoints:
+- Enter custom **API Base URL** in the UI
+- Select **Model** (default: gpt-4o-mini)
+
+### Rate Limits (Free Tier)
+
+- **NewsData.io**: 200 API calls/day
+- **OpenAI**: Varies by account (pay-as-you-go)
+
+## 📝 API Documentation
+
+Interactive API docs available at: **http://localhost:8000/api/docs**
+
+### Main Endpoints:
+- `POST /api/search` - Start a new search job
+- `GET /api/jobs` - List recent jobs (limit: 50)
+- `GET /api/jobs/{job_id}` - Get job details
+- `GET /api/jobs/{job_id}/results` - Get analysis results
+- `GET /api/jobs/{job_id}/download` - Download results (JSON/CSV/Excel)
+
+No database required - stores results as JSON files.
+
+## 🛠️ Tech Stack
+
+- **Backend**: FastAPI 0.124.4 (async Python)
+- **AI**: OpenAI 2.11.0 (AsyncOpenAI)
+- **News API**: NewsData.io
+- **Data Export**: Pandas 2.3.3, openpyxl
+- **Web Server**: Uvicorn 0.38.0
+- **Frontend**: Vanilla JavaScript (no framework)
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
 
