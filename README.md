@@ -6,6 +6,10 @@ Modern web application for searching and analyzing news articles with AI-powered
 
 > **🚀 Live Demo:** [https://opennewsagent-production.up.railway.app](https://opennewsagent-production.up.railway.app)
 
+## 📸 Demo
+
+![Demo Dashboard](Demo_dash.png)
+
 ## ✨ Features
 
 - 🔍 **Search Any Topic** - Search for any news topic across 17+ categories
