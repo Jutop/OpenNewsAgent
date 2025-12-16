@@ -240,7 +240,7 @@ async def process_news_search(job_id: str, request: SearchRequest):
             api_key=request.openai_api_key,
             model=request.model,
             base_url=request.api_base_url,
-            is_azure=request.is_azure,
+            is_azure=request.is_azure or False,
             api_version=request.api_version
         )
         
