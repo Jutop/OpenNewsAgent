@@ -14,6 +14,8 @@ class SearchRequest(BaseModel):
     news_api_key: str = Field(..., description="NewsData.io API key")
     openai_api_key: str = Field(..., description="OpenAI API key")
     api_base_url: Optional[str] = Field(None, description="Custom API base URL (for Azure or other)")
+    is_azure: bool = Field(default=False, description="Is this an Azure OpenAI endpoint")
+    api_version: Optional[str] = Field(None, description="Azure API version (e.g., 2024-02-15-preview)")
     model: str = Field(default="gpt-4o-mini", description="Model to use")
     size: int = Field(default=10, ge=1, le=10, description="Articles per page")
     max_pages: int = Field(default=10, ge=1, le=50, description="Max pages")

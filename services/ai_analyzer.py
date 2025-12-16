@@ -2,6 +2,7 @@
 AI Analyzer - Azure OpenAI integration
 """
 import openai
+from openai import AsyncAzureOpenAI
 from typing import List, Dict, Any, Optional
 import logging
 import json
@@ -12,13 +13,28 @@ logger = logging.getLogger(__name__)
 class AIAnalyzer:
     """Analyze articles with OpenAI"""
     
-    def __init__(self, api_key: str, model: str = "gpt-4o-mini", base_url: Optional[str] = None):
-        kwargs = {"api_key": api_key}
-        if base_url:
-            kwargs["base_url"] = base_url
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini", base_url: Optional[str] = None, 
+                 is_azure: bool = False, api_version: Optional[str] = None):
         
-        self.client = openai.AsyncOpenAI(**kwargs)
         self.model = model
+        self.is_azure = is_azure
+        
+        if is_azure:
+            # Azure OpenAI configuration - using base_url like the original sync version
+            api_version = api_version or "2024-10-21"
+            azure_base_url = base_url or "https://api.openai.com/v1"
+            
+            self.client = AsyncAzureOpenAI(
+                api_key=api_key,
+                base_url=azure_base_url,
+                api_version=api_version
+            )
+        else:
+            # Standard OpenAI configuration
+            if base_url:
+                self.client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+            else:
+                self.client = openai.AsyncOpenAI(api_key=api_key)
     
     async def analyze_articles(
         self,
@@ -105,8 +121,12 @@ Return ALL articles in JSON format:
                 max_tokens=4000
             )
             
-            response_text = response.choices[0].message.content.strip()
-            classified = self._extract_json(response_text)
+            response_text = response.choices[0].message.content
+            if not response_text:
+                logger.error("Empty response from AI")
+                return []
+                
+            classified = self._extract_json(response_text.strip())
             
             return classified
             

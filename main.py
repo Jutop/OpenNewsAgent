@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Suppress httpx logging to avoid exposing API keys in URLs
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 # Initialize FastAPI app
 app = FastAPI(
     title="AI News Agent API",
@@ -236,7 +239,9 @@ async def process_news_search(job_id: str, request: SearchRequest):
         analyzer = AIAnalyzer(
             api_key=request.openai_api_key,
             model=request.model,
-            base_url=request.api_base_url
+            base_url=request.api_base_url,
+            is_azure=request.is_azure,
+            api_version=request.api_version
         )
         
         logger.info(f"Job {job_id}: Starting AI analysis")

@@ -419,14 +419,27 @@
             </div>
 
             <div class="form-group">
-                <label for="openaiApiKey">OpenAI API Key * <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size: 0.85em; color: #667eea; text-decoration: none;">(Get API key)</a></label>
+                <label for="openaiApiKey">OpenAI API Key * & Azure OpenAI API Key * <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size: 0.85em; color: #667eea; text-decoration: none;">(Get API key)</a></label>
                 <input type="password" id="openaiApiKey" required>
             </div>
             
             <div class="form-group">
                 <label for="apiBaseUrl">API Base URL (Optional)</label>
                 <input type="text" id="apiBaseUrl" placeholder="https://api.openai.com/v1 (default) or Azure endpoint">
-                <small style="color: var(--text-light); font-size: 0.85em;">Leave empty for standard OpenAI. For Azure: https://your-resource.openai.azure.com/</small>
+                <small style="color: var(--text-light); font-size: 0.85em;">Leave empty for standard OpenAI. For Azure: Enter full base URL including /openai (e.g., https://your-resource.azurewebsites.net/openai)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="isAzure">
+                    <input type="checkbox" id="isAzure" style="width: auto; margin-right: 8px;">
+                    This is an Azure OpenAI endpoint
+                </label>
+            </div>
+            
+            <div class="form-group" id="apiVersionGroup" style="display: none;">
+                <label for="apiVersion">Azure API Version</label>
+                <input type="text" id="apiVersion" placeholder="2024-10-21" value="2024-10-21">
+                <small style="color: var(--text-light); font-size: 0.85em;">Azure OpenAI API version</small>
             </div>
             
             <div class="form-group">
@@ -502,6 +515,8 @@
             const newsApiKey = document.getElementById('newsApiKey').value.trim();
             const openaiApiKey = document.getElementById('openaiApiKey').value.trim();
             const apiBaseUrl = document.getElementById('apiBaseUrl').value.trim();
+            const isAzure = document.getElementById('isAzure').checked;
+            const apiVersion = document.getElementById('apiVersion').value.trim();
             const model = document.getElementById('modelSelect').value;
             const languages = getSelectedValues('languages');
             const categories = getSelectedValues('categories');
@@ -516,6 +531,12 @@
                 return;
             }
 
+            // Clear previous results
+            document.getElementById('resultsContainer').innerHTML = '';
+            document.getElementById('totalArticles').textContent = '0';
+            document.getElementById('veryRelevant').textContent = '0';
+            document.getElementById('relevant').textContent = '0';
+
             const requestData = {
                 query,
                 languages,
@@ -524,6 +545,8 @@
                 news_api_key: newsApiKey,
                 openai_api_key: openaiApiKey,
                 api_base_url: apiBaseUrl || null,
+                is_azure: isAzure,
+                api_version: apiVersion || null,
                 model: model || 'gpt-4o-mini',
                 size: 10,
                 max_pages: 10
@@ -731,6 +754,8 @@
         async function fetchModels() {
             const openaiApiKey = document.getElementById('openaiApiKey').value.trim();
             const apiBaseUrl = document.getElementById('apiBaseUrl').value.trim() || 'https://api.openai.com/v1';
+            const isAzure = document.getElementById('isAzure').checked;
+const apiVersion = document.getElementById('apiVersion').value.trim() || '2024-10-21';
             
             if (!openaiApiKey) {
                 alert('Please enter your OpenAI API key first');
@@ -738,14 +763,27 @@
             }
             
             try {
-                const response = await fetch(`${apiBaseUrl}/models`, {
-                    headers: {
+                let url, headers;
+                
+                if (isAzure) {
+                    // Azure OpenAI uses different endpoint and headers
+                    url = `${apiBaseUrl}/deployments?api-version=${apiVersion}`;
+                    headers = {
+                        'api-key': openaiApiKey
+                    };
+                } else {
+                    // Standard OpenAI
+                    url = `${apiBaseUrl}/models`;
+                    headers = {
                         'Authorization': `Bearer ${openaiApiKey}`
-                    }
-                });
+                    };
+                }
+                
+                const response = await fetch(url, { headers });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch models');
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch models: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
@@ -755,28 +793,44 @@
                 // Clear and repopulate
                 select.innerHTML = '';
                 
-                // Filter for chat/text models only (exclude embeddings, audio, image models)
-                const textModels = data.data
-                    .filter(m => {
-                        const id = m.id.toLowerCase();
-                        // Include GPT chat models
-                        if (id.includes('gpt')) {
-                            // Exclude embedding, vision-only, and other non-chat variants
-                            return !id.includes('embedding') && 
-                                   !id.includes('realtime') &&
-                                   !id.includes('audio');
-                        }
-                        // Include other chat models like Claude, etc. if available
-                        return id.includes('claude') || id.includes('chat') || id.includes('text-') && !id.includes('embedding');
-                    })
-                    .sort((a, b) => {
-                        // Sort by priority: gpt-4o, gpt-4, gpt-3.5
-                        if (a.id.includes('gpt-4o')) return -1;
-                        if (b.id.includes('gpt-4o')) return 1;
-                        if (a.id.includes('gpt-4')) return -1;
-                        if (b.id.includes('gpt-4')) return 1;
-                        return a.id.localeCompare(b.id);
-                    });
+                let textModels;
+                
+                if (isAzure) {
+                    // Azure returns deployments, not models
+                    textModels = (data.data || [])
+                        .filter(d => {
+                            // Filter for chat deployments
+                            const capabilities = d.capabilities || {};
+                            return capabilities.chat_completion === true || 
+                                   d.model?.toLowerCase().includes('gpt') ||
+                                   d.model?.toLowerCase().includes('chat');
+                        })
+                        .map(d => ({ id: d.id, model: d.model }))
+                        .sort((a, b) => a.id.localeCompare(b.id));
+                } else {
+                    // Standard OpenAI - filter for chat/text models only
+                    textModels = (data.data || [])
+                        .filter(m => {
+                            const id = m.id.toLowerCase();
+                            // Include GPT chat models
+                            if (id.includes('gpt')) {
+                                // Exclude embedding, vision-only, and other non-chat variants
+                                return !id.includes('embedding') && 
+                                       !id.includes('realtime') &&
+                                       !id.includes('audio');
+                            }
+                            // Include other chat models like Claude, etc. if available
+                            return id.includes('claude') || id.includes('chat') || id.includes('text-') && !id.includes('embedding');
+                        })
+                        .sort((a, b) => {
+                            // Sort by priority: gpt-4o, gpt-4, gpt-3.5
+                            if (a.id.includes('gpt-4o')) return -1;
+                            if (b.id.includes('gpt-4o')) return 1;
+                            if (a.id.includes('gpt-4')) return -1;
+                            if (b.id.includes('gpt-4')) return 1;
+                            return a.id.localeCompare(b.id);
+                        });
+                }
                 
                 if (textModels.length === 0) {
                     alert('No compatible text models found. Using default models.');
@@ -793,7 +847,11 @@
                 textModels.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model.id;
-                    option.textContent = model.id;
+                    if (isAzure && model.model) {
+                        option.textContent = `${model.id} (${model.model})`;
+                    } else {
+                        option.textContent = model.id;
+                    }
                     select.appendChild(option);
                 });
                 
@@ -802,23 +860,41 @@
                     select.value = currentValue;
                 }
                 
-                alert(`Loaded ${textModels.length} compatible text models`);
+                alert(`Loaded ${textModels.length} compatible ${isAzure ? 'deployments' : 'models'}`);
             } catch (error) {
                 console.error('Error fetching models:', error);
-                alert('Failed to fetch models. Check your API key and base URL.');
+                alert(`Failed to fetch models. ${error.message}`);
             }
         }
+        
+        // Toggle Azure API version field
+        document.addEventListener('DOMContentLoaded', () => {
+            const isAzureCheckbox = document.getElementById('isAzure');
+            const apiVersionGroup = document.getElementById('apiVersionGroup');
+            
+            isAzureCheckbox.addEventListener('change', (e) => {
+                apiVersionGroup.style.display = e.target.checked ? 'block' : 'none';
+                localStorage.setItem('isAzure', e.target.checked);
+            });
+        });
 
         // Save/load API keys
         window.addEventListener('DOMContentLoaded', () => {
             const savedNewsKey = localStorage.getItem('newsApiKey');
             const savedOpenaiKey = localStorage.getItem('openaiApiKey');
             const savedApiBaseUrl = localStorage.getItem('apiBaseUrl');
+            const savedIsAzure = localStorage.getItem('isAzure') === 'true';
+            const savedApiVersion = localStorage.getItem('apiVersion');
             const savedModel = localStorage.getItem('model');
             
             if (savedNewsKey) document.getElementById('newsApiKey').value = savedNewsKey;
             if (savedOpenaiKey) document.getElementById('openaiApiKey').value = savedOpenaiKey;
             if (savedApiBaseUrl) document.getElementById('apiBaseUrl').value = savedApiBaseUrl;
+            if (savedIsAzure) {
+                document.getElementById('isAzure').checked = true;
+                document.getElementById('apiVersionGroup').style.display = 'block';
+            }
+            if (savedApiVersion) document.getElementById('apiVersion').value = savedApiVersion;
             if (savedModel) document.getElementById('modelSelect').value = savedModel;
 
             document.getElementById('newsApiKey').addEventListener('change', (e) => {
@@ -829,6 +905,12 @@
             });
             document.getElementById('apiBaseUrl').addEventListener('change', (e) => {
                 localStorage.setItem('apiBaseUrl', e.target.value);
+            });
+            document.getElementById('isAzure').addEventListener('change', (e) => {
+                localStorage.setItem('isAzure', e.target.checked);
+            });
+            document.getElementById('apiVersion').addEventListener('change', (e) => {
+                localStorage.setItem('apiVersion', e.target.value);
             });
             document.getElementById('modelSelect').addEventListener('change', (e) => {
                 localStorage.setItem('model', e.target.value);

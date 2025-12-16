@@ -110,9 +110,22 @@ OpenNewsAgent/
 
 ### Custom OpenAI Endpoint
 
-Support for Azure OpenAI or custom endpoints:
-- Enter custom **API Base URL** in the UI
-- Select **Model** (default: gpt-4o-mini)
+Support for **Azure OpenAI** or **custom OpenAI-compatible endpoints**:
+
+1. **Standard OpenAI (default)**:
+   - Leave "API Base URL" empty
+   - Uses `https://api.openai.com/v1`
+
+2. **Azure OpenAI**:
+   - Enter your Azure OpenAI base URL (e.g., `https://your-resource.openai.azure.com/openai`)
+   - Check ✅ **"This is an Azure OpenAI endpoint"**
+   - Set API Version (e.g `2024-10-21`)
+   - Enter your Azure API key
+   - Use your **deployment name** as the model (not the base model name)
+
+3. **Custom Endpoints**:
+   - Enter your custom base URL
+   - Keep Azure checkbox unchecked for OpenAI-compatible APIs
 
 ### Rate Limits (Free Tier)
 
