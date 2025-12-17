@@ -40,7 +40,7 @@ Then open: **http://localhost:8000**
 
 ### 3. Enter Your API Keys
 
-You'll need two free API keys (entered in the browser UI):
+You'll need two API keys (entered in the browser UI):
 
 1. **NewsData.io** - [Get free key](https://newsdata.io/) (200 requests/day)
 2. **OpenAI** - [Get API key](https://platform.openai.com/api-keys)
