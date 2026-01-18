@@ -2,8 +2,6 @@
 
 Modern web application for searching and analyzing news articles with AI-powered classification.
 
-Modern web application for searching and analyzing news articles with AI-powered classification.
-
 ## 📸 Demo
 
 ![Demo Dashboard](Demo_dash.png)
