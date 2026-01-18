@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI News Agent"
     VERSION: str = "2.0.0"
     DEBUG: bool = True
-    HOST: str = "0.0.0.0"
+    HOST: str = "localhost"
     PORT: int = 8000
     
     # OpenAI

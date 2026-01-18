@@ -1,10 +1,8 @@
 # 🤖 AI News Agent
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/Jutop/OpenNewsAgent)
-
 Modern web application for searching and analyzing news articles with AI-powered classification.
 
-> **🚀 Live Demo:** [https://opennewsagent-production.up.railway.app](https://opennewsagent-production.up.railway.app)
+Modern web application for searching and analyzing news articles with AI-powered classification.
 
 ## 📸 Demo
 
@@ -147,30 +145,14 @@ No database required - stores results as JSON files.
 
 ## 🚀 Deployment
 
-### Deploy to Railway (Recommended - 2 minutes)
+### Deploy Manually
 
-1. **Click the Deploy Button:**
-   
-   [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/Jutop/OpenNewsAgent)
+Or connect your repo to your hosting provider of choice:
+1. Choose a host (GitHub Actions, Render, Fly, Heroku, or your own server)
+2. Push the repository to your chosen provider or configure CI to run `pip install -r requirements.txt` and `python main.py`
+3. Ensure environment variables or secrets for API keys are set per-hosting provider documentation
 
-2. **That's it!** Railway will:
-   - Clone your repository
-   - Install dependencies automatically
-   - Deploy your app
-   - Give you a live URL
-
-**Cost:** Free ($5/month credit, enough for moderate usage)
-
-### Alternative: Deploy Manually
-
-Or connect your repo manually:
-1. Go to [railway.app](https://railway.app)
-2. Sign in with GitHub
-3. Click "New Project" → "Deploy from GitHub repo"
-4. Select `Jutop/OpenNewsAgent`
-5. Railway auto-detects Python and deploys
-
-**After deployment**, users can access your app and enter their own API keys!
+After deployment, users can access your app and enter their own API keys.
 
 ## 🛠️ Tech Stack
 
